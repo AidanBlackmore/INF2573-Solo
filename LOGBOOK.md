@@ -14,7 +14,7 @@
 |---|------|------|------------|----------------------|
 | 1 | | | | |
 | 2 | | | | |
-| 3 | | | | |
+| 3 | | Thursday, September 24, 2026 | | |
 | 4 | | | | |
 | 5 | | | | |
 | 6 | | | | |
@@ -31,6 +31,9 @@
 
 ## Entry 3
 
+**Date:** Thursday, September 24, 2026
+
+Today, we quickly drafted interview questions without AI assistance to interview random participants to find value and opportunities for our project. We synthesized those findings with Claude and further utilized AI tools to develop those findings into an opportunity-solution tree as explored in this week's readings.  I conducted one interview and handled the synthesizing of the findings. Our team initially had some disagreements over which questions to ask participants in the interview but ultimate aligned on questions that were not leading and allowed participants to speak openly in the related topic areas.
 
 ## Entry 4
 
