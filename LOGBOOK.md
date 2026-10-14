@@ -42,7 +42,7 @@ Today, we quickly drafted interview questions without AI assistance to interview
 
 **Date:** Thursday, October 8, 2026
 
-Today we heavily considered what analytics we needed and set up both Vercel and Supabase hosting  followed by PostHog for analytics. We are still facing some difficulties with integrating these smoothly but have noted strong progress from before a week ago. We continue to iterate on our design but still need a more cohesive narrative and some sense of visuals and audio to add before further testing.
+Today we heavily considered what analytics we needed and set up both Vercel and Supabase hosting followed by PostHog for analytics. We are still facing some difficulties with integrating these smoothly but have noted strong progress since last week. We continue to iterate on our design but still need a more cohesive narrative and some sense of visuals and audio to add before further testing.
 
 ## Entry 6
 
