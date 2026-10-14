@@ -16,7 +16,7 @@
 | 2 | | | | |
 | 3 | | Thursday, September 24, 2026 | | Aligning on interview questions; moving the product to be local instead of online |
 | 4 | | | | |
-| 5 | | | | |
+| 5 | | Thursday, October 8, 2026 | | |
 | 6 | | | | |
 | 7 | | | | |
 | 8 | | | | |
@@ -40,6 +40,9 @@ Today, we quickly drafted interview questions without AI assistance to interview
 
 ## Entry 5
 
+**Date:** Thursday, October 8, 2026
+
+Today we heavily considered what analytics we needed and set up both Vercel and Supabase hosting  followed by PostHog for analytics. We are still facing some difficulties with integrating these smoothly but have noted strong progress from before a week ago. We continue to iterate on our design but still need a more cohesive narrative and some sense of visuals and audio to add before further testing.
 
 ## Entry 6
 
