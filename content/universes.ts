@@ -29,6 +29,8 @@ export type Universe = {
   title: string;
   tagline: string;
   tone: string;
+  // Locked universes show greyed out in the lobby and can't be voted for.
+  locked?: boolean;
   acts: Act[];
 };
 
@@ -138,6 +140,7 @@ export const UNIVERSES: Universe[] = [
     title: "Last Train",
     tagline: "Your night train is stuck in the snow.",
     tone: "Cozy, everyday",
+    locked: true,
     acts: [
       {
         kind: "player",
@@ -236,6 +239,7 @@ export const UNIVERSES: Universe[] = [
     title: "Station Zero",
     tagline: "A space station, 12 hours from rescue.",
     tone: "Sci-fi",
+    locked: true,
     acts: [
       {
         kind: "player",
@@ -334,6 +338,7 @@ export const UNIVERSES: Universe[] = [
     title: "Moonlight Academy",
     tagline: "Your team's final exam at a school of magic.",
     tone: "Fantasy",
+    locked: true,
     acts: [
       {
         kind: "player",
@@ -428,6 +433,10 @@ export const UNIVERSES: Universe[] = [
     ],
   },
 ];
+
+export function isPlayable(universe: Universe): boolean {
+  return !universe.locked;
+}
 
 export function getUniverse(id: string | null | undefined): Universe | undefined {
   return UNIVERSES.find((u) => u.id === id);

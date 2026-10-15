@@ -1,5 +1,6 @@
 import {
   getUniverse,
+  isPlayable,
   type Act,
   type OptionAct,
   type Split,
@@ -85,11 +86,13 @@ export function actConfig(act: Act) {
   };
 }
 
-// Lobby votes per universe, and the universes with the most votes.
+// Lobby votes per universe, and the universes with the most votes. Votes for
+// a locked universe (e.g. cast before it was locked) don't count.
 export function universeVotes(players: Player[]) {
   const counts = new Map<string, number>();
   for (const p of players) {
-    if (p.universe_vote) counts.set(p.universe_vote, (counts.get(p.universe_vote) ?? 0) + 1);
+    const universe = getUniverse(p.universe_vote);
+    if (universe && isPlayable(universe)) counts.set(universe.id, (counts.get(universe.id) ?? 0) + 1);
   }
   const top = Math.max(0, ...counts.values());
   const leaders = top === 0 ? [] : [...counts].filter(([, n]) => n === top).map(([id]) => id);

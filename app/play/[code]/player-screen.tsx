@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CheckIcon } from "../../check-icon";
-import { UNIVERSES } from "@/content/universes";
+import { UNIVERSES, isPlayable } from "@/content/universes";
 import { track } from "@/lib/analytics";
 import { candidatesFor, currentAct, currentUniverse, hasSubmitted } from "@/lib/game";
 import { ensureSignedIn, errorMessage, supabase } from "@/lib/supabase";
@@ -305,18 +305,23 @@ function UniverseVote({
       </div>
       <ul className="flex flex-col gap-3">
         {UNIVERSES.map((u) => {
-          const isVoted = u.id === voted;
+          const playable = isPlayable(u);
+          const isVoted = playable && u.id === voted;
           return (
             <li key={u.id}>
               <button
                 onClick={() => vote(u.id)}
+                disabled={!playable}
                 aria-pressed={isVoted}
-                className={`flex w-full items-start justify-between gap-4 rounded-2xl border-2 px-5 py-4 text-left ${
+                className={`flex w-full items-start justify-between gap-4 rounded-2xl border-2 px-5 py-4 text-left disabled:cursor-not-allowed disabled:opacity-40 ${
                   isVoted ? "border-stone-900 bg-stone-900 text-white" : "border-stone-300 bg-white"
                 }`}
               >
                 <span className="flex flex-col gap-1">
-                  <span className="text-xs font-medium uppercase tracking-widest opacity-60">{u.tone}</span>
+                  <span className="text-xs font-medium uppercase tracking-widest opacity-60">
+                    {u.tone}
+                    {!playable && " · Coming soon"}
+                  </span>
                   <span className="text-2xl font-semibold">{u.title}</span>
                   <span className="text-base opacity-75">{u.tagline}</span>
                 </span>

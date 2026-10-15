@@ -25,7 +25,7 @@ The laptop page is the shared screen. There is no separate host: whoever is next
 
 ## Where things live
 
-- **Story content:** [`content/universes.ts`](content/universes.ts). All four universes, every scenario, opener and outcome. Add or edit a universe here without touching game logic. `{winner}` and `{runner_up}` are filled in automatically.
+- **Story content:** [`content/universes.ts`](content/universes.ts). All four universes, every scenario, opener and outcome. Add or edit a universe here without touching game logic. `{winner}` and `{runner_up}` are filled in automatically. A universe with `locked: true` shows greyed out ("Coming soon") in the lobby and can't be voted for; on this branch only Mall Night is unlocked. Remove the flag to bring a universe back.
 - **Game rules:** [`lib/game.ts`](lib/game.ts). Split rules, ties, outcome text and the recap. `getOpener()` is the placeholder for a future AI-generated opener.
 - **Screens:** `app/host/` (shared screen) and `app/play/[code]/` (phone).
 - **Database:** [`supabase/migrations/`](supabase/migrations). Run the files in order. `0005_choice_timer.sql` adds the voting timer and `0006_discussion_window.sql` adds the discussion before it. To change their lengths, change the `choice_seconds` (10 to 600) and `discussion_seconds` (0 to 300, 0 turns the discussion off) defaults on `rooms`.

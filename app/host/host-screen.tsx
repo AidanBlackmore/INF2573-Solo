@@ -3,7 +3,7 @@
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
 import { CheckIcon } from "../check-icon";
-import { UNIVERSES, UNIVERSE_META, type Act, type Universe } from "@/content/universes";
+import { UNIVERSES, UNIVERSE_META, isPlayable, type Act, type Universe } from "@/content/universes";
 import { eventPart, track } from "@/lib/analytics";
 import {
   MAX_PLAYERS,
@@ -404,20 +404,25 @@ function Lobby({
             {UNIVERSES.map((u) => {
               const votes = counts.get(u.id) ?? 0;
               const isLeading = leaders.includes(u.id);
+              const playable = isPlayable(u);
               return (
                 <li
                   key={u.id}
                   className={`flex flex-col gap-3 rounded-3xl border-2 p-7 ${
                     isLeading ? "border-amber-400 bg-stone-800" : "border-stone-800 bg-stone-900"
-                  }`}
+                  } ${playable ? "" : "opacity-40 grayscale"}`}
                 >
                   <div className="flex items-baseline justify-between gap-4">
                     <span className="text-lg font-medium uppercase tracking-widest text-amber-400">
                       {u.tone}
                     </span>
-                    <span className={`text-2xl font-semibold ${votes ? "text-white" : "text-stone-600"}`}>
-                      {votes} {votes === 1 ? "vote" : "votes"}
-                    </span>
+                    {playable ? (
+                      <span className={`text-2xl font-semibold ${votes ? "text-white" : "text-stone-600"}`}>
+                        {votes} {votes === 1 ? "vote" : "votes"}
+                      </span>
+                    ) : (
+                      <span className="text-2xl font-semibold text-stone-500">Coming soon</span>
+                    )}
                   </div>
                   <span className="text-4xl font-semibold">{u.title}</span>
                   <span className="text-2xl text-stone-300">{u.tagline}</span>
