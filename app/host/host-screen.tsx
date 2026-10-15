@@ -221,73 +221,71 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
       )}
 
       {room.phase === "choosing" && universe && act && (
-        <div className="flex flex-1 flex-col gap-10">
+        <div className="flex flex-col gap-5">
           <Eyebrow>
             Act {room.act} of {universe.acts.length} · {act.title}
             {room.stage === 1 && " · Tie-break vote"}
           </Eyebrow>
           {room.stage === 1 ? (
-            <div className="flex flex-col gap-6">
-              <p className="text-5xl font-semibold leading-tight">
+            <div className="flex flex-col gap-3">
+              <p className="text-3xl font-semibold leading-tight">
                 It&apos;s a tie. Everyone votes again on their phones.
               </p>
               <ul className="flex flex-col gap-3">
                 {candidatesFor(act, players)
                   .filter((c) => room.tie_options.includes(c.key))
                   .map((c) => (
-                    <li key={c.key} className="text-4xl text-stone-300">
+                    <li key={c.key} className="text-2xl text-stone-300">
                       {c.label}
                     </li>
                   ))}
               </ul>
             </div>
           ) : (
-            <p className={`max-w-6xl font-semibold leading-tight ${act.scene ? "text-4xl" : "text-5xl"}`}>
-              {act.scenario}
-            </p>
+            <p className="max-w-6xl text-3xl font-semibold leading-snug">{act.scenario}</p>
           )}
           {act.kind === "option" && room.stage === 0 && (
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-1">
               {act.options.map((o) => (
-                <li key={o.key} className="text-3xl text-stone-300">
+                <li key={o.key} className="text-2xl text-stone-300">
                   <span className="font-semibold text-white">{o.key})</span> {o.label}
                 </li>
               ))}
             </ul>
           )}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
               {discussing && (
                 <>
-                  <p className="text-5xl font-semibold tabular-nums text-amber-400">
+                  <p className="text-3xl font-semibold tabular-nums text-amber-400">
                     Talk it over · {formatSeconds(opensIn)}
                   </p>
-                  <p className="text-2xl text-stone-400">Voting opens on your phones when the discussion ends.</p>
+                  <p className="text-xl text-stone-400">Voting opens on your phones when the discussion ends.</p>
                 </>
               )}
               {!discussing && secondsLeft !== null && (
                 <p
-                  className={`text-5xl font-semibold tabular-nums ${secondsLeft <= 10 ? "text-amber-400" : ""}`}
+                  className={`text-3xl font-semibold tabular-nums ${secondsLeft <= 10 ? "text-amber-400" : ""}`}
                 >
                   {secondsLeft > 0 ? formatSeconds(secondsLeft) : "Time's up"}
                 </p>
               )}
               {!discussing && (
-                <p className="text-2xl text-stone-400">
+                <p className="text-xl text-stone-400">
                   {secondsLeft === 0
                     ? "Picking at random for anyone who hasn't chosen…"
                     : `${players.filter((p) => hasSubmitted(p, room)).length} of ${players.length} have chosen`}
                 </p>
               )}
             </div>
-            <ul className="flex flex-wrap gap-4">
+            <ul className="flex flex-wrap gap-3">
               {players.map((p) => (
                 <SubmissionChip key={p.id} name={p.name} done={hasSubmitted(p, room)} />
               ))}
             </ul>
           </div>
-          <div className="mt-auto flex items-center gap-8">
-            <BigButton onClick={() => run(() => rpc("reveal_now", { p_room_id: room.id }))} disabled={busy}>
+          <div className="flex items-center gap-8">
+            <BigButton size="md" onClick={() => run(() => rpc("reveal_now", { p_room_id: room.id }))} disabled={busy}>
               Reveal now
             </BigButton>
             <ErrorText error={error} />
@@ -501,22 +499,22 @@ function Reveal({
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-10">
+    <div className="flex flex-col gap-5">
       <Eyebrow>
         Act {room.act} of {universe.acts.length} · {act.title}
       </Eyebrow>
 
-      <div className="grid flex-1 grid-cols-1 gap-14 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <section className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            {result.main.counts.length === 0 && <p className="text-3xl text-stone-500">No one chose.</p>}
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            {result.main.counts.length === 0 && <p className="text-2xl text-stone-500">No one chose.</p>}
             {result.main.counts.map(({ candidate, count }) => (
-              <p key={candidate.key} className="text-4xl font-semibold">
+              <p key={candidate.key} className="text-2xl font-semibold">
                 {count} chose {candidate.label}
               </p>
             ))}
           </div>
-          <div className="flex flex-col gap-1 text-2xl">
+          <div className="flex flex-col text-xl">
             {players.map((p) => {
               const c = mainChoices.find((x) => x.player_id === p.id);
               return c ? (
@@ -535,10 +533,10 @@ function Reveal({
           </div>
           {result.revote && (
             <div className="flex flex-col gap-2">
-              <p className="text-xl font-medium uppercase tracking-widest text-stone-500">Re-vote</p>
-              {result.revote.counts.length === 0 && <p className="text-3xl text-stone-500">No one chose.</p>}
+              <p className="text-lg font-medium uppercase tracking-widest text-stone-500">Re-vote</p>
+              {result.revote.counts.length === 0 && <p className="text-2xl text-stone-500">No one chose.</p>}
               {result.revote.counts.map(({ candidate, count }) => (
-                <p key={candidate.key} className="text-3xl font-semibold">
+                <p key={candidate.key} className="text-2xl font-semibold">
                   {count} chose {candidate.label}
                 </p>
               ))}
@@ -546,23 +544,23 @@ function Reveal({
           )}
         </section>
 
-        <section className="flex flex-col gap-8">
+        <section className="flex flex-col gap-4">
           {result.status === "needs-revote" && (
-            <div className="flex flex-col items-start gap-6">
-              <p className="text-5xl font-semibold leading-tight">
+            <div className="flex flex-col items-start gap-4">
+              <p className="text-3xl font-semibold leading-snug">
                 It&apos;s a tie between {names(result.main.tied)}. Everyone votes again.
               </p>
-              <BigButton onClick={() => onRevote(result.main.tied.map((c) => c.key))} disabled={busy}>
+              <BigButton size="md" onClick={() => onRevote(result.main.tied.map((c) => c.key))} disabled={busy}>
                 Vote again
               </BigButton>
             </div>
           )}
           {result.status === "needs-pick" && result.revote && (
-            <div className="flex flex-col gap-6">
-              <p className="text-4xl font-semibold">Still tied. Click the one that wins.</p>
+            <div className="flex flex-col gap-4">
+              <p className="text-3xl font-semibold">Still tied. Click the one that wins.</p>
               <div className="flex flex-wrap gap-4">
                 {result.revote.tied.map((c) => (
-                  <SecondaryButton key={c.key} onClick={() => onPickTie(c.key)} disabled={busy}>
+                  <SecondaryButton size="md" key={c.key} onClick={() => onPickTie(c.key)} disabled={busy}>
                     {c.label}
                   </SecondaryButton>
                 ))}
@@ -570,16 +568,16 @@ function Reveal({
             </div>
           )}
           {outcome && (
-            <div className="flex flex-col gap-6">
-              {outcome.opener && <p className="text-3xl text-stone-400">{outcome.opener}</p>}
-              <p className="text-5xl font-semibold leading-tight">{outcome.outcome}</p>
+            <div className="flex flex-col gap-3">
+              {outcome.opener && <p className="text-2xl text-stone-400">{outcome.opener}</p>}
+              <p className="text-3xl font-semibold leading-snug">{outcome.outcome}</p>
             </div>
           )}
         </section>
       </div>
 
       <div className="flex items-center gap-8">
-        <BigButton onClick={onNext} disabled={busy || !outcome}>
+        <BigButton size="md" onClick={onNext} disabled={busy || !outcome}>
           {isLast ? "See the ending" : "Next act"}
         </BigButton>
         <ErrorText error={error} />

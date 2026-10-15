@@ -19,20 +19,27 @@ export function HostShell({
   );
 }
 
-export function BigButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+// "md" is for the act screens, where the scene band needs the space.
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { size?: "lg" | "md" };
+
+export function BigButton({ size = "lg", ...props }: ButtonProps) {
   return (
     <button
       {...props}
-      className="rounded-2xl bg-amber-400 px-12 py-6 text-4xl font-semibold text-stone-950 transition-opacity disabled:opacity-30"
+      className={`bg-amber-400 font-semibold text-stone-950 transition-opacity disabled:opacity-30 ${
+        size === "md" ? "rounded-xl px-8 py-3 text-2xl" : "rounded-2xl px-12 py-6 text-4xl"
+      }`}
     />
   );
 }
 
-export function SecondaryButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function SecondaryButton({ size = "lg", ...props }: ButtonProps) {
   return (
     <button
       {...props}
-      className="rounded-2xl border-2 border-stone-600 px-10 py-6 text-3xl font-semibold text-white transition-opacity disabled:opacity-30"
+      className={`border-2 border-stone-600 font-semibold text-white transition-opacity disabled:opacity-30 ${
+        size === "md" ? "rounded-xl px-6 py-3 text-2xl" : "rounded-2xl px-10 py-6 text-3xl"
+      }`}
     />
   );
 }
@@ -51,11 +58,11 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
 export function SubmissionChip({ name, done }: { name: string; done: boolean }) {
   return (
     <li
-      className={`flex items-center gap-3 rounded-2xl px-6 py-4 text-3xl font-medium ${
+      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xl font-medium ${
         done ? "bg-emerald-500 text-stone-950" : "border-2 border-stone-700 text-stone-500"
       }`}
     >
-      {done && <CheckIcon className="h-8 w-8" />}
+      {done && <CheckIcon className="h-5 w-5" />}
       {name}
     </li>
   );
@@ -69,8 +76,8 @@ export function SceneBand({ src, label }: { src: string; label: string }) {
   const isImage = /\.(jpe?g|png|webp|avif|gif)$/i.test(src);
 
   return (
-    // Grows into the screen's spare space (up to 40% of its height) and shrinks to 15% when the act has more text.
-    <div className="relative max-h-[40vh] min-h-[15vh] grow-[3] basis-0 overflow-hidden rounded-3xl bg-linear-to-b from-stone-800 to-stone-900">
+    // Takes all the screen's spare space, and never less than 30% of its height.
+    <div className="relative min-h-[30vh] grow basis-0 overflow-hidden rounded-3xl bg-linear-to-b from-stone-800 to-stone-900">
       {!missing &&
         (isImage ? (
           <div
