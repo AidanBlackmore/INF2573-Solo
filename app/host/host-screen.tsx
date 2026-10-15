@@ -25,7 +25,7 @@ import {
 import { ensureSignedIn, errorMessage, supabase } from "@/lib/supabase";
 import { useRoom } from "@/lib/useRoom";
 import { formatSeconds, useSecondsLeft } from "@/lib/useSecondsLeft";
-import { BigButton, ErrorText, Eyebrow, HostShell, SecondaryButton, SubmissionChip } from "./ui";
+import { BigButton, ErrorText, Eyebrow, HostShell, SceneBand, SecondaryButton, SubmissionChip } from "./ui";
 
 // The host's current room survives a laptop refresh.
 const STORAGE_KEY = "mall-night:host-room-id";
@@ -215,6 +215,11 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
         />
       )}
 
+      {/* Outside the phase blocks so the clip keeps playing from choosing into the reveal. */}
+      {(room.phase === "choosing" || room.phase === "revealed") && act?.scene && (
+        <SceneBand key={act.scene} src={act.scene} label={act.title} />
+      )}
+
       {room.phase === "choosing" && universe && act && (
         <div className="flex flex-1 flex-col gap-10">
           <Eyebrow>
@@ -237,7 +242,9 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
               </ul>
             </div>
           ) : (
-            <p className="max-w-6xl text-5xl font-semibold leading-tight">{act.scenario}</p>
+            <p className={`max-w-6xl font-semibold leading-tight ${act.scene ? "text-4xl" : "text-5xl"}`}>
+              {act.scenario}
+            </p>
           )}
           {act.kind === "option" && room.stage === 0 && (
             <ul className="flex flex-col gap-3">

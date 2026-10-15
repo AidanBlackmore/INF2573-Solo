@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CheckIcon } from "../check-icon";
 
 export function HostShell({
@@ -57,5 +58,46 @@ export function SubmissionChip({ name, done }: { name: string; done: boolean }) 
       {done && <CheckIcon className="h-8 w-8" />}
       {name}
     </li>
+  );
+}
+
+// The act's animated scene, in a band across the top of the shared screen: a
+// muted looping video, or a still image. Until the file exists, a dark
+// placeholder keeps the layout the same (and names the missing file in dev).
+export function SceneBand({ src, label }: { src: string; label: string }) {
+  const [missing, setMissing] = useState(false);
+  const isImage = /\.(jpe?g|png|webp|avif|gif)$/i.test(src);
+
+  return (
+    // Grows into the screen's spare space (up to 40% of its height) and shrinks to 15% when the act has more text.
+    <div className="relative max-h-[40vh] min-h-[15vh] grow-[3] basis-0 overflow-hidden rounded-3xl bg-linear-to-b from-stone-800 to-stone-900">
+      {!missing &&
+        (isImage ? (
+          <div
+            role="img"
+            aria-label={label}
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${src})` }}
+          />
+        ) : (
+          <video
+            src={src}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label={label}
+            onError={() => setMissing(true)}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ))}
+      {missing && process.env.NODE_ENV === "development" && (
+        <p className="absolute inset-0 flex items-center justify-center text-xl text-stone-500">
+          Scene goes here: public{src}
+        </p>
+      )}
+      {/* Fades the bottom edge into the page so the text below reads as part of the scene. */}
+      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-stone-950/80 to-transparent" />
+    </div>
   );
 }

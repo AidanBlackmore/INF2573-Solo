@@ -4,7 +4,12 @@
 
 export type Split = "together" | "majority" | "divided";
 
-export type PlayerAct = {
+// Optional on every act: an animated scene shown in a band across the top of
+// the shared screen. A path under public/, e.g. "/media/mall-night/act-1.mp4"
+// (a muted looping video) or a still image (.jpg, .png, .webp).
+type Scene = { scene?: string };
+
+export type PlayerAct = Scene & {
   kind: "player";
   title: string;
   scenario: string;
@@ -12,7 +17,7 @@ export type PlayerAct = {
   outcomes: Record<Split, string>;
 };
 
-export type OptionAct = {
+export type OptionAct = Scene & {
   kind: "option";
   title: string;
   scenario: string;
@@ -46,6 +51,7 @@ export const UNIVERSES: Universe[] = [
       {
         kind: "player",
         title: "The money",
+        scene: "/media/mall-night/act-1.mp4",
         scenario:
           "The doors locked at 10 p.m. and your group is still inside the empty Glenview Mall. Between you, you have $47 in cash. Only one person can hold it. Who should it be?",
         outcomes: {
@@ -60,6 +66,7 @@ export const UNIVERSES: Universe[] = [
       {
         kind: "option",
         title: "The noise",
+        scene: "/media/mall-night/act-2.mp4",
         scenario:
           "A crash echoes from the food court. Something, or someone, is in there. What do you do?",
         openers: {
@@ -91,6 +98,7 @@ export const UNIVERSES: Universe[] = [
       {
         kind: "option",
         title: "The voice",
+        scene: "/media/mall-night/act-3.mp4",
         scenario:
           "In the staff room you find a security radio. A voice crackles through: 'Is someone in the mall? I'm locked on the parking level. Can you let me up?' You can't see who it is.",
         openers: {
@@ -122,6 +130,7 @@ export const UNIVERSES: Universe[] = [
       {
         kind: "player",
         title: "Dawn",
+        scene: "/media/mall-night/act-4.mp4",
         scenario:
           "You find the keys. One door opens onto the street, but the alarm will go off the moment it does. One person steps out first to explain things to whoever shows up. Who should it be?",
         outcomes: {
