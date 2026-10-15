@@ -1,0 +1,37 @@
+[
+  {
+    "id": "zombie",
+    "name": "Zombie Apocalypse",
+    "emoji": "🧟",
+    "tagline": "Day 12. The mall is safe. Mostly.",
+    "tone": "Survival comedy. Scarce food, paranoia about who's been bitten, petty group politics in a barricaded shopping mall."
+  },
+  {
+    "id": "reality",
+    "name": "Reality TV Villa",
+    "emoji": "🌴",
+    "tagline": "Eight weeks. One villa. Cameras everywhere.",
+    "tone": "Trashy dating/competition reality show. Confessionals, alliances, fake-outs, dramatic recouplings, a host who loves chaos."
+  },
+  {
+    "id": "office",
+    "name": "The Office",
+    "emoji": "🏢",
+    "tagline": "Mandatory team-building starts at 9.",
+    "tone": "Workplace mockumentary. Passive-aggressive emails, a doomed team-building retreat, a stolen stapler, a manager who wants to be liked."
+  },
+  {
+    "id": "fantasy",
+    "name": "Fantasy Kingdom",
+    "emoji": "🐉",
+    "tagline": "The prophecy mentions you. Vaguely.",
+    "tone": "Light-hearted fantasy quest. A vague prophecy, a dragon with opinions, a tavern with a questionable bard, royal intrigue."
+  },
+  {
+    "id": "highschool",
+    "name": "High School Again",
+    "emoji": "🎒",
+    "tagline": "You're all 16. Prom is in two weeks.",
+    "tone": "Teen movie. Cliques, a pop quiz nobody studied for, a house party that gets out of hand, prom drama, yearbook superlatives."
+  }
+]

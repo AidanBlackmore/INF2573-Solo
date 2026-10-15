@@ -1,0 +1,75 @@
+{
+  "setup": {
+    "intro": "Welcome to Villa Paradiso, where eight weeks of sunshine, challenges and questionable decisions will be broadcast to millions. The host has promised 'a twist every night.'",
+    "roles": [
+      { "trait": "carer", "title": "The Fan Favourite", "blurb": "The audience loves them. The other contestants are suspicious of that." },
+      { "trait": "planner", "title": "The Strategist", "blurb": "Says 'I'm not here to make friends' in every confessional." },
+      { "trait": "risk", "title": "The Late Arrival", "blurb": "Walked in on day 3 and immediately changed everything." },
+      { "trait": "talker", "title": "The Confessional Queen", "blurb": "Nice to everyone's face. Devastating in the diary room." },
+      { "trait": "doer", "title": "The One Who Is Actually Here For Love", "blurb": "Nobody knows what to do with this." },
+      { "trait": "wildcard", "title": "The Chaos Agent", "blurb": "Producers' favourite. Has 'accidentally' started three fights." }
+    ],
+    "relationships": [
+      "{a} and {b} have a secret alliance that everyone knows about.",
+      "{a} told the cameras {b} is 'fake', and {b} hasn't seen the footage yet.",
+      "{a} has a crush on {b} and thinks it's subtle.",
+      "{a} and {b} were coupled up for exactly one day and don't talk about it.",
+      "{a} borrowed {b}'s sunglasses on day one and still has them.",
+      "{a} thinks {b} is the biggest threat to win."
+    ]
+  },
+  "rounds": {
+    "choice": [
+      {
+        "scene": "The host bursts in at 2am: tonight, one of you can read everyone's diary-room confessions. Then everyone finds out who read them.",
+        "prompt": "Do you take the tapes?",
+        "options": ["Obviously, I need to know", "Refuse, and make a big show of refusing", "Take them, share nothing", "Give them to {someone}"]
+      },
+      {
+        "scene": "It's the challenge. The team that loses gives up their phones for 24 hours, and your team is losing badly.",
+        "prompt": "What's your strategy?",
+        "options": ["Cheat, subtly", "Cheat, not subtly", "Give up and work on my tan", "Blame {someone} in advance"]
+      },
+      {
+        "scene": "A text arrives: 'Tonight, one contestant gets to swap beds with anyone in the villa.'",
+        "prompt": "What do you do with this power?",
+        "options": ["Split up the power couple", "Swap with {someone} for strategy", "Keep my bed and look loyal", "Sell the swap to the highest bidder"]
+      }
+    ],
+    "vote_player": [
+      {
+        "scene": "The host reveals that one contestant has been secretly running a gossip account about the villa.",
+        "prompt": "Who is running the gossip account?"
+      },
+      {
+        "scene": "Viewers are voting on who has 'the most dramatic exit if they get dumped from the villa.'",
+        "prompt": "Who would have the most dramatic exit?"
+      },
+      {
+        "scene": "Producers are planning a spin-off show starring one contestant.",
+        "prompt": "Who gets their own spin-off, and what's it called? (Say it out loud.)"
+      }
+    ],
+    "predict": [
+      {
+        "scene": "{target} is pulled into the diary room and asked: 'Who in this villa would you NOT trust with a secret?'",
+        "prompt": "How does {target} answer?",
+        "options": ["Names someone instantly", "Diplomatic non-answer", "Names themselves, as a joke", "Walks out of the diary room"]
+      },
+      {
+        "scene": "An ex of {target} walks into the villa, smiling, holding two drinks.",
+        "prompt": "What does {target} do?",
+        "options": ["Takes the drink", "Leaves the room immediately", "Introduces the ex to everyone", "Immediately starts plotting"]
+      },
+      {
+        "scene": "{target} wins the final challenge: £10,000, or a surprise mystery envelope.",
+        "prompt": "What does {target} pick?",
+        "options": ["The money, no question", "The envelope, for the drama", "Gives the choice to the group", "Tries to negotiate for both"]
+      }
+    ]
+  },
+  "recap": {
+    "titles": ["Main Character Energy", "Diary Room Legend", "Producers' Favourite Problem", "Secretly Running the Villa", "Most Likely to Cry in a Confessional", "Villain Edit (Earned It)"],
+    "epilogue": "The season wrapped. The reunion episode is going to be a disaster."
+  }
+}

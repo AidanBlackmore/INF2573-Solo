@@ -1,0 +1,75 @@
+{
+  "setup": {
+    "intro": "Welcome to Dunmore Paper Supply, regional branch. Corporate has announced a mandatory team-building retreat, and someone's lunch has gone missing from the fridge. Again.",
+    "roles": [
+      { "trait": "carer", "title": "The Manager Who Wants To Be Liked", "blurb": "Calls every meeting a 'jam session.'" },
+      { "trait": "talker", "title": "The Office Gossip", "blurb": "Knows about the layoffs before HR does." },
+      { "trait": "doer", "title": "The Overachiever", "blurb": "Colour-codes the shared calendar. Unprompted." },
+      { "trait": "risk", "title": "The One Who Is Always 'Working From Home'", "blurb": "Camera always off. Suspicious background noises." },
+      { "trait": "wildcard", "title": "The Prank Mastermind", "blurb": "Once put a stapler in jelly. Has not stopped since." },
+      { "trait": "planner", "title": "The IT Person", "blurb": "Can read everyone's emails. Chooses not to. Mostly." }
+    ],
+    "relationships": [
+      "{a} is convinced {b} steals their lunch.",
+      "{a} covers for {b}'s long lunches. For a price.",
+      "{a} and {b} have a running bet that nobody else knows about.",
+      "{a} accidentally replied-all about {b} once and never recovered.",
+      "{a} is quietly competing with {b} for Employee of the Month.",
+      "{a} thinks {b} is secretly the boss's favourite."
+    ]
+  },
+  "rounds": {
+    "choice": [
+      {
+        "scene": "The team-building retreat begins with a trust fall. The manager is already crying with joy.",
+        "prompt": "What do you do?",
+        "options": ["Fall with full confidence", "Only fall if {someone} catches", "Fake a phone call", "Organise a union instead"]
+      },
+      {
+        "scene": "Someone accidentally sends the whole office a spreadsheet ranking everyone's desk snacks.",
+        "prompt": "How do you react?",
+        "options": ["Reply-all a correction", "Defend my ranking to the death", "Pretend I never saw it", "Start my own, meaner spreadsheet"]
+      },
+      {
+        "scene": "The printer is jammed. Again. There's an important client meeting in 5 minutes.",
+        "prompt": "What's your move?",
+        "options": ["Fix it heroically", "Walk away and blame {someone}", "Present from memory", "Bring snacks instead of slides"]
+      }
+    ],
+    "vote_player": [
+      {
+        "scene": "The office fridge investigation has reached its final stage. HR is involved.",
+        "prompt": "Who is stealing lunches from the office fridge?"
+      },
+      {
+        "scene": "Corporate wants one employee to star in the new company training video.",
+        "prompt": "Who would accidentally turn the training video into a viral meme?"
+      },
+      {
+        "scene": "There's one spot left in the lifeboat on the company boat trip (it's a pond, but still).",
+        "prompt": "Who would push a coworker out of the way for the last lifeboat seat?"
+      }
+    ],
+    "predict": [
+      {
+        "scene": "{target} is asked to give a speech at the office party. With zero notice.",
+        "prompt": "What does {target} do?",
+        "options": ["Nails it, somehow", "Reads the menu out loud", "Makes it a roast", "Sneaks out the fire exit"]
+      },
+      {
+        "scene": "{target} is offered a promotion, but it means managing everyone in this room.",
+        "prompt": "What does {target} say?",
+        "options": ["Yes, and power goes straight to my head", "Yes, but only for the parking space", "No, I like chaos from below", "Asks for the salary first"]
+      },
+      {
+        "scene": "{target} finds out who's been stealing their lunch.",
+        "prompt": "What does {target} do?",
+        "options": ["Confronts them publicly", "Poisons the next lunch (with hot sauce)", "Says nothing, holds a grudge forever", "Starts stealing theirs back"]
+      }
+    ]
+  },
+  "recap": {
+    "titles": ["Employee of the Month (Disputed)", "Chief Lunch Suspect", "Reply-All Survivor", "Mandatory Fun Coordinator", "HR's Frequent Visitor", "Knows Where the Bodies Are Buried"],
+    "epilogue": "The retreat is over. Nobody learned anything, but the group chat has a new name."
+  }
+}
