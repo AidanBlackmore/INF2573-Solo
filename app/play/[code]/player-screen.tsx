@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CheckIcon } from "../../check-icon";
+import { KnifeIcon } from "../../knife-icon";
 import { UNIVERSES, isPlayable } from "@/content/universes";
 import { track } from "@/lib/analytics";
 import { backToPicker, nextAct, resolveTie, revealNow, startRevote, startUniverse } from "@/lib/actions";
@@ -149,6 +150,7 @@ function Controller({
   const opensIn = useSecondsLeft(room?.phase === "choosing" ? room.choices_open_at : null);
   // Everyone reads the scenario and talks before anyone can choose.
   const discussing = opensIn !== null && opensIn > 0;
+  const isMurderer = useIsMurderer(room);
 
   const me = players.find((p) => p.id === myPlayerId);
   if (!room || !me) return <PhoneShell roomCode={roomCode} />;
@@ -198,6 +200,8 @@ function Controller({
 
   return (
     <PhoneShell roomCode={roomCode} name={me.name}>
+      {room.phase !== "lobby" && isMurderer !== null && <RoleCard isMurderer={isMurderer} />}
+
       {room.phase === "lobby" && (
         <UniverseVote
           roomId={room.id}
@@ -472,6 +476,78 @@ function LeaderControls({
       ))}
       {error && <p className="text-lg text-red-600">{error}</p>}
     </section>
+  );
+}
+
+// Secret role (test): one random player per playthrough is the Murderer. The
+// database lets only that player read the role row, so every other phone gets
+// nothing back. null until known, and in the lobby.
+function useIsMurderer(room: Room | null): boolean | null {
+  const key = room && room.phase !== "lobby" ? `${room.id}:${room.run_start_round}` : null;
+  const [role, setRole] = useState<{ key: string; murderer: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!key) return;
+    const [roomId, run] = key.split(":");
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("secret_roles")
+        .select("run_start_round")
+        .eq("room_id", roomId)
+        .eq("run_start_round", Number(run))
+        .maybeSingle();
+      if (!cancelled && !error) setRole({ key, murderer: data !== null });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [key]);
+
+  return role && role.key === key ? role.murderer : null;
+}
+
+// Every phone shows the same card, so nobody stands out from across the room.
+// The role only shows while the card is held down.
+function RoleCard({ isMurderer }: { isMurderer: boolean }) {
+  const [shown, setShown] = useState(false);
+  const hide = () => setShown(false);
+
+  return (
+    <button
+      type="button"
+      onPointerDown={() => setShown(true)}
+      onPointerUp={hide}
+      onPointerLeave={hide}
+      onPointerCancel={hide}
+      onContextMenu={(e) => e.preventDefault()}
+      aria-label="Hold to see your secret role"
+      className={`flex min-h-16 w-full touch-none select-none items-center gap-4 rounded-2xl px-5 py-3 text-left [-webkit-touch-callout:none] ${
+        shown && isMurderer ? "bg-red-700 text-white" : "bg-stone-900 text-white"
+      }`}
+    >
+      {shown ? (
+        isMurderer ? (
+          <>
+            <KnifeIcon className="h-9 w-9 shrink-0" />
+            <span className="flex flex-col">
+              <span className="text-xl font-semibold">You are the Murderer</span>
+              <span className="text-sm opacity-80">Keep it to yourself.</span>
+            </span>
+          </>
+        ) : (
+          <span className="flex flex-col">
+            <span className="text-xl font-semibold">You are innocent</span>
+            <span className="text-sm opacity-80">Someone in the room is the Murderer.</span>
+          </span>
+        )
+      ) : (
+        <span className="flex flex-col">
+          <span className="text-xl font-semibold">Secret role</span>
+          <span className="text-sm opacity-70">Hold to see. Don&apos;t let anyone look.</span>
+        </span>
+      )}
+    </button>
   );
 }
 
