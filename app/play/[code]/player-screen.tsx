@@ -6,7 +6,21 @@ import { useEffect, useState } from "react";
 import { CheckIcon } from "../../check-icon";
 import { UNIVERSES, isPlayable } from "@/content/universes";
 import { track } from "@/lib/analytics";
-import { candidatesFor, currentAct, currentUniverse, hasSubmitted } from "@/lib/game";
+import { backToPicker, nextAct, resolveTie, revealNow, startRevote, startUniverse } from "@/lib/actions";
+import {
+  MIN_PLAYERS,
+  actOutcome,
+  candidatesFor,
+  currentAct,
+  currentUniverse,
+  hasSubmitted,
+  resolveAct,
+  roomLeader,
+  universeVotes,
+  type Choice,
+  type Player,
+  type Room,
+} from "@/lib/game";
 import { ensureSignedIn, errorMessage, supabase } from "@/lib/supabase";
 import { useRoom } from "@/lib/useRoom";
 import { formatSeconds, useSecondsLeft } from "@/lib/useSecondsLeft";
@@ -124,7 +138,7 @@ function Controller({
   roomCode: string;
   myPlayerId: string;
 }) {
-  const { room, players, reload } = useRoom(roomId);
+  const { room, players, choices, reload } = useRoom(roomId);
   // Selections and local submit state are tied to a round, so they reset
   // automatically when the host starts the next act.
   const [selection, setSelection] = useState<{ step: string; key: string } | null>(null);
@@ -138,6 +152,13 @@ function Controller({
 
   const me = players.find((p) => p.id === myPlayerId);
   if (!room || !me) return <PhoneShell roomCode={roomCode} />;
+
+  // The first player to join moves the story forward from their phone.
+  const leader = roomLeader(players);
+  const isLeader = leader?.id === me.id;
+  const leaderControls = isLeader && (
+    <LeaderControls room={room} players={players} choices={choices} secondsLeft={secondsLeft} onDone={reload} />
+  );
 
   const universe = currentUniverse(room);
   const act = currentAct(room);
@@ -177,10 +198,26 @@ function Controller({
 
   return (
     <PhoneShell roomCode={roomCode} name={me.name}>
-      {room.phase === "lobby" && <UniverseVote roomId={room.id} current={me.universe_vote} onVoted={reload} />}
+      {room.phase === "lobby" && (
+        <UniverseVote
+          roomId={room.id}
+          current={me.universe_vote}
+          onVoted={reload}
+          footer={
+            leaderControls || (
+              <p className="text-center text-base text-stone-500">
+                The game starts when {leader?.name ?? "the first player"} taps Start.
+              </p>
+            )
+          }
+        />
+      )}
 
       {room.phase === "choosing" && submitted && (
-        <Message title="Waiting for others…" body="Your choice is locked in and kept secret." />
+        <>
+          <Message title="Waiting for others…" body="Your choice is locked in and kept secret." />
+          {leaderControls}
+        </>
       )}
 
       {room.phase === "choosing" && !submitted && secondsLeft === 0 && (
@@ -258,14 +295,20 @@ function Controller({
       )}
 
       {room.phase === "revealed" && (
-        <Message title="Choices revealed" body="Look at the shared screen." />
+        <>
+          <Message title="Choices revealed" body="Look at the shared screen." />
+          {leaderControls}
+        </>
       )}
 
       {room.phase === "ended" && (
-        <Message
-          title={`The end of ${universe?.title ?? "this universe"}`}
-          body="Look at the shared screen and talk it over."
-        />
+        <>
+          <Message
+            title={`The end of ${universe?.title ?? "this universe"}`}
+            body="Look at the shared screen and talk it over."
+          />
+          {leaderControls}
+        </>
       )}
     </PhoneShell>
   );
@@ -275,10 +318,12 @@ function UniverseVote({
   roomId,
   current,
   onVoted,
+  footer,
 }: {
   roomId: string;
   current: string | null;
   onVoted: () => Promise<void>;
+  footer: React.ReactNode;
 }) {
   // Shown right away on tap, before the database confirms.
   const [pending, setPending] = useState<string | null>(null);
@@ -332,8 +377,101 @@ function UniverseVote({
         })}
       </ul>
       {error && <p className="text-lg text-red-600">{error}</p>}
-      <p className="mt-auto text-center text-base text-stone-500">The game starts from the shared screen.</p>
+      <div className="mt-auto">{footer}</div>
     </div>
+  );
+}
+
+// The leader's buttons for moving the story forward: the same actions as the
+// shared screen's backup controls, for whatever step the game is on.
+function LeaderControls({
+  room,
+  players,
+  choices,
+  secondsLeft,
+  onDone,
+}: {
+  room: Room;
+  players: Player[];
+  choices: Choice[];
+  secondsLeft: number | null;
+  onDone: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(action: () => Promise<void>) {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await action();
+    } catch (e) {
+      setError(errorMessage(e));
+    }
+    await onDone();
+    setBusy(false);
+  }
+
+  const universe = currentUniverse(room);
+  const act = currentAct(room);
+  let note: string | null = null;
+  const buttons: { label: string; onClick: () => Promise<void> }[] = [];
+
+  if (room.phase === "lobby") {
+    const { leaders } = universeVotes(players);
+    if (players.length < MIN_PLAYERS) note = `Waiting for at least ${MIN_PLAYERS} players to join.`;
+    else if (leaders.length === 0) note = "Waiting for votes.";
+    else {
+      if (leaders.length > 1) note = "It's a tie. Pick the one to play.";
+      for (const u of UNIVERSES.filter((u) => leaders.includes(u.id))) {
+        buttons.push({ label: `Start ${u.title}`, onClick: () => startUniverse(room, u) });
+      }
+    }
+  } else if (room.phase === "choosing") {
+    // When time runs out the shared screen picks at random and reveals by itself.
+    if (secondsLeft !== 0) buttons.push({ label: "Reveal now", onClick: () => revealNow(room) });
+  } else if (room.phase === "revealed" && universe && act) {
+    const result = resolveAct(act, room, choices.filter((c) => c.round === room.round), players);
+    if (result.status === "needs-revote") {
+      buttons.push({ label: "Vote again", onClick: () => startRevote(room, result.main.tied.map((c) => c.key)) });
+    } else if (result.status === "needs-pick" && result.revote) {
+      note = "Still tied. Pick the winner.";
+      for (const c of result.revote.tied) {
+        buttons.push({ label: `${c.label} wins`, onClick: () => resolveTie(room, c.key) });
+      }
+    } else if (actOutcome(act, result)) {
+      const isLast = room.act >= universe.acts.length;
+      buttons.push({ label: isLast ? "See the ending" : "Next act", onClick: () => nextAct(room) });
+    }
+  } else if (room.phase === "ended" && universe) {
+    buttons.push({ label: "Replay this one", onClick: () => startUniverse(room, universe, true) });
+    buttons.push({ label: "Play another universe", onClick: () => backToPicker(room) });
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-2xl border-2 border-amber-300 bg-amber-50 p-4">
+      <div>
+        <p className="text-sm font-medium uppercase tracking-widest text-amber-800">You lead the game</p>
+        <p className="text-base text-stone-600">Your phone moves the story forward for everyone.</p>
+      </div>
+      {note && <p className="text-lg font-medium text-stone-800">{note}</p>}
+      {buttons.map((b, i) => (
+        <button
+          key={b.label}
+          onClick={() => run(b.onClick)}
+          disabled={busy}
+          className={
+            i === 0
+              ? primaryButton
+              : "flex h-14 w-full items-center justify-center rounded-2xl border-2 border-stone-300 bg-white text-lg font-semibold disabled:opacity-30"
+          }
+        >
+          {b.label}
+        </button>
+      ))}
+      {error && <p className="text-lg text-red-600">{error}</p>}
+    </section>
   );
 }
 

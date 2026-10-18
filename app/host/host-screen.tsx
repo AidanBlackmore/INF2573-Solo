@@ -4,12 +4,12 @@ import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
 import { CheckIcon } from "../check-icon";
 import { UNIVERSES, UNIVERSE_META, isPlayable, type Act, type Universe } from "@/content/universes";
-import { eventPart, track } from "@/lib/analytics";
+import { backToPicker, nextAct, resolveTie, revealNow, startRevote, startUniverse } from "@/lib/actions";
+import { track } from "@/lib/analytics";
 import {
   MAX_PLAYERS,
   MIN_PLAYERS,
   PLAYER_HINT,
-  actConfig,
   actOutcome,
   candidatesFor,
   computeRecap,
@@ -17,6 +17,7 @@ import {
   currentUniverse,
   hasSubmitted,
   resolveAct,
+  roomLeader,
   universeVotes,
   type Choice,
   type Player,
@@ -25,7 +26,16 @@ import {
 import { ensureSignedIn, errorMessage, supabase } from "@/lib/supabase";
 import { useRoom } from "@/lib/useRoom";
 import { formatSeconds, useSecondsLeft } from "@/lib/useSecondsLeft";
-import { BigButton, ErrorText, Eyebrow, HostShell, SceneBand, SecondaryButton, SubmissionChip } from "./ui";
+import {
+  BackupControls,
+  BigButton,
+  ErrorText,
+  Eyebrow,
+  HostShell,
+  SceneBand,
+  SecondaryButton,
+  SubmissionChip,
+} from "./ui";
 
 // The host's current room survives a laptop refresh.
 const STORAGE_KEY = "mall-night:host-room-id";
@@ -109,11 +119,6 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
     }
   }
 
-  async function rpc(fn: string, args: Record<string, unknown>) {
-    const { error } = await supabase.rpc(fn, args);
-    if (error) throw error;
-  }
-
   const createGame = () =>
     run(async () => {
       const { data, error } = await supabase.rpc("create_room");
@@ -161,28 +166,8 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
   const universe = currentUniverse(room);
   const act = currentAct(room);
 
-  const startUniverse = (u: Universe, isReplay = false) =>
-    run(async () => {
-      await rpc("start_universe", { p_room_id: room.id, p_universe_id: u.id, ...actConfig(u.acts[0]) });
-      if (!isReplay) {
-        track("universe_selected", { universe_id: u.id });
-        // One event per universe, e.g. universe_selected_mall_night.
-        track(`universe_selected_${eventPart(u.id)}`, { universe_id: u.id });
-      }
-      trackRoundStarted(u, 1);
-    });
-
-  const nextAct = () =>
-    run(async () => {
-      if (!universe) return;
-      const next = universe.acts[room.act];
-      if (!next) {
-        await rpc("end_universe", { p_room_id: room.id });
-        return;
-      }
-      await rpc("next_act", { p_room_id: room.id, ...actConfig(next) });
-      trackRoundStarted(universe, room.act + 1);
-    });
+  // The first player's phone runs the game; the buttons here are a backup.
+  const leader = roomLeader(players)?.name;
 
   return (
     <HostShell
@@ -211,7 +196,8 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
           players={players}
           busy={busy}
           error={error}
-          onStart={(u) => startUniverse(u)}
+          leader={leader}
+          onStart={(u) => run(() => startUniverse(room, u))}
         />
       )}
 
@@ -284,12 +270,12 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
               ))}
             </ul>
           </div>
-          <div className="flex items-center gap-8">
-            <BigButton size="md" onClick={() => run(() => rpc("reveal_now", { p_room_id: room.id }))} disabled={busy}>
+          <BackupControls leader={leader}>
+            <SecondaryButton size="sm" onClick={() => run(() => revealNow(room))} disabled={busy}>
               Reveal now
-            </BigButton>
+            </SecondaryButton>
             <ErrorText error={error} />
-          </div>
+          </BackupControls>
         </div>
       )}
 
@@ -302,9 +288,10 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
           choices={choices.filter((c) => c.round === room.round)}
           busy={busy}
           error={error}
-          onRevote={(keys) => run(() => rpc("start_revote", { p_room_id: room.id, p_tied: keys }))}
-          onPickTie={(key) => run(() => rpc("resolve_tie", { p_room_id: room.id, p_pick: key }))}
-          onNext={nextAct}
+          leader={leader}
+          onRevote={(keys) => run(() => startRevote(room, keys))}
+          onPickTie={(key) => run(() => resolveTie(room, key))}
+          onNext={() => run(() => nextAct(room))}
         />
       )}
 
@@ -316,15 +303,16 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
           choices={choices}
           busy={busy}
           error={error}
-          onAnother={() => run(() => rpc("back_to_picker", { p_room_id: room.id }))}
-          onReplay={() => startUniverse(universe, true)}
+          leader={leader}
+          onAnother={() => run(() => backToPicker(room))}
+          onReplay={() => run(() => startUniverse(room, universe, true))}
         />
       )}
 
       {room.phase !== "lobby" && !universe && (
         <div className="flex flex-1 flex-col items-start justify-center gap-8">
           <p className="text-4xl">This universe is no longer available.</p>
-          <BigButton onClick={() => run(() => rpc("back_to_picker", { p_room_id: room.id }))} disabled={busy}>
+          <BigButton onClick={() => run(() => backToPicker(room))} disabled={busy}>
             Back to universes
           </BigButton>
           <ErrorText error={error} />
@@ -334,27 +322,19 @@ export default function HostScreen({ feedbackUrl }: { feedbackUrl: string | null
   );
 }
 
-// One event name per round, so each round is its own step in PostHog:
-// round_1_started, round_2_started… up to the number of acts in the universe.
-function trackRoundStarted(universe: Universe, round: number) {
-  track(`round_${round}_started`, {
-    universe_id: universe.id,
-    round,
-    total_rounds: universe.acts.length,
-  });
-}
-
 function Lobby({
   room,
   players,
   busy,
   error,
+  leader,
   onStart,
 }: {
   room: Room;
   players: Player[];
   busy: boolean;
   error: string | null;
+  leader?: string;
   onStart: (u: Universe) => void;
 }) {
   const enough = players.length >= MIN_PLAYERS;
@@ -436,25 +416,19 @@ function Lobby({
               );
             })}
           </ul>
-          <div className="flex flex-wrap items-center gap-6">
-            {leading.length === 0 && <p className="text-2xl text-stone-500">Waiting for votes…</p>}
-            {leading.length === 1 && (
-              <BigButton onClick={() => onStart(leading[0])} disabled={busy}>
-                Start {leading[0].title}
-              </BigButton>
-            )}
-            {leading.length > 1 && (
-              <>
-                <p className="text-2xl text-stone-300">Tied. Click the one to play:</p>
-                {leading.map((u) => (
-                  <SecondaryButton key={u.id} onClick={() => onStart(u)} disabled={busy}>
-                    Start {u.title}
-                  </SecondaryButton>
-                ))}
-              </>
-            )}
-            <ErrorText error={error} />
-          </div>
+          {leading.length === 0 ? (
+            <p className="text-2xl text-stone-500">Waiting for votes…</p>
+          ) : (
+            <BackupControls leader={leader}>
+              {leading.length > 1 && <p className="text-xl text-stone-300">Tied. Pick the one to play:</p>}
+              {leading.map((u) => (
+                <SecondaryButton size="sm" key={u.id} onClick={() => onStart(u)} disabled={busy}>
+                  Start {u.title}
+                </SecondaryButton>
+              ))}
+              <ErrorText error={error} />
+            </BackupControls>
+          )}
         </section>
       )}
     </div>
@@ -469,6 +443,7 @@ function Reveal({
   choices,
   busy,
   error,
+  leader,
   onRevote,
   onPickTie,
   onNext,
@@ -480,6 +455,7 @@ function Reveal({
   choices: Choice[];
   busy: boolean;
   error: string | null;
+  leader?: string;
   onRevote: (keys: string[]) => void;
   onPickTie: (key: string) => void;
   onNext: () => void;
@@ -546,26 +522,14 @@ function Reveal({
 
         <section className="flex flex-col gap-4">
           {result.status === "needs-revote" && (
-            <div className="flex flex-col items-start gap-4">
-              <p className="text-3xl font-semibold leading-snug">
-                It&apos;s a tie between {names(result.main.tied)}. Everyone votes again.
-              </p>
-              <BigButton size="md" onClick={() => onRevote(result.main.tied.map((c) => c.key))} disabled={busy}>
-                Vote again
-              </BigButton>
-            </div>
+            <p className="text-3xl font-semibold leading-snug">
+              It&apos;s a tie between {names(result.main.tied)}. Everyone votes again.
+            </p>
           )}
           {result.status === "needs-pick" && result.revote && (
-            <div className="flex flex-col gap-4">
-              <p className="text-3xl font-semibold">Still tied. Click the one that wins.</p>
-              <div className="flex flex-wrap gap-4">
-                {result.revote.tied.map((c) => (
-                  <SecondaryButton size="md" key={c.key} onClick={() => onPickTie(c.key)} disabled={busy}>
-                    {c.label}
-                  </SecondaryButton>
-                ))}
-              </div>
-            </div>
+            <p className="text-3xl font-semibold leading-snug">
+              Still tied between {names(result.revote.tied)}. {leader ?? "The shared screen"} picks the winner.
+            </p>
           )}
           {outcome && (
             <div className="flex flex-col gap-3">
@@ -576,12 +540,25 @@ function Reveal({
         </section>
       </div>
 
-      <div className="flex items-center gap-8">
-        <BigButton size="md" onClick={onNext} disabled={busy || !outcome}>
-          {isLast ? "See the ending" : "Next act"}
-        </BigButton>
+      <BackupControls leader={leader}>
+        {result.status === "needs-revote" && (
+          <SecondaryButton size="sm" onClick={() => onRevote(result.main.tied.map((c) => c.key))} disabled={busy}>
+            Vote again
+          </SecondaryButton>
+        )}
+        {result.status === "needs-pick" &&
+          result.revote?.tied.map((c) => (
+            <SecondaryButton size="sm" key={c.key} onClick={() => onPickTie(c.key)} disabled={busy}>
+              {c.label} wins
+            </SecondaryButton>
+          ))}
+        {outcome && (
+          <SecondaryButton size="sm" onClick={onNext} disabled={busy}>
+            {isLast ? "See the ending" : "Next act"}
+          </SecondaryButton>
+        )}
         <ErrorText error={error} />
-      </div>
+      </BackupControls>
     </div>
   );
 }
@@ -593,6 +570,7 @@ function Ending({
   choices,
   busy,
   error,
+  leader,
   onAnother,
   onReplay,
 }: {
@@ -602,6 +580,7 @@ function Ending({
   choices: Choice[];
   busy: boolean;
   error: string | null;
+  leader?: string;
   onAnother: () => void;
   onReplay: () => void;
 }) {
@@ -630,14 +609,16 @@ function Ending({
         <p>Want to hear why everyone chose differently?</p>
         <p>What surprised you about the group&apos;s choices?</p>
       </div>
-      <div className="mt-auto flex flex-wrap items-center gap-6">
-        <BigButton onClick={onAnother} disabled={busy}>
-          Play another universe
-        </BigButton>
-        <SecondaryButton onClick={onReplay} disabled={busy}>
-          Replay this one
-        </SecondaryButton>
-        <ErrorText error={error} />
+      <div className="mt-auto">
+        <BackupControls leader={leader}>
+          <SecondaryButton size="sm" onClick={onAnother} disabled={busy}>
+            Play another universe
+          </SecondaryButton>
+          <SecondaryButton size="sm" onClick={onReplay} disabled={busy}>
+            Replay this one
+          </SecondaryButton>
+          <ErrorText error={error} />
+        </BackupControls>
       </div>
     </div>
   );

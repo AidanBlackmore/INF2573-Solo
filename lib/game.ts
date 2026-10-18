@@ -70,6 +70,14 @@ export function hasSubmitted(player: Player, room: Room): boolean {
   );
 }
 
+// The first player to join leads: their phone moves the story forward. Same
+// rule as the database (private.is_room_leader): earliest join, then id.
+export function roomLeader(players: Player[]): Player | undefined {
+  return [...players].sort((a, b) =>
+    a.created_at === b.created_at ? (a.id < b.id ? -1 : 1) : a.created_at < b.created_at ? -1 : 1,
+  )[0];
+}
+
 export function currentUniverse(room: Room): Universe | undefined {
   return getUniverse(room.universe_id);
 }

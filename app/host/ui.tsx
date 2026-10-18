@@ -19,15 +19,20 @@ export function HostShell({
   );
 }
 
-// "md" is for the act screens, where the scene band needs the space.
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { size?: "lg" | "md" };
+// "md" is for the act screens, where the scene band needs the space. "sm" is
+// for the shared screen's backup controls (the leader's phone runs the game).
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { size?: "lg" | "md" | "sm" };
 
 export function BigButton({ size = "lg", ...props }: ButtonProps) {
   return (
     <button
       {...props}
       className={`bg-amber-400 font-semibold text-stone-950 transition-opacity disabled:opacity-30 ${
-        size === "md" ? "rounded-xl px-8 py-3 text-2xl" : "rounded-2xl px-12 py-6 text-4xl"
+        size === "sm"
+          ? "rounded-lg px-4 py-1.5 text-lg"
+          : size === "md"
+            ? "rounded-xl px-8 py-3 text-2xl"
+            : "rounded-2xl px-12 py-6 text-4xl"
       }`}
     />
   );
@@ -38,9 +43,28 @@ export function SecondaryButton({ size = "lg", ...props }: ButtonProps) {
     <button
       {...props}
       className={`border-2 border-stone-600 font-semibold text-white transition-opacity disabled:opacity-30 ${
-        size === "md" ? "rounded-xl px-6 py-3 text-2xl" : "rounded-2xl px-10 py-6 text-3xl"
+        size === "sm"
+          ? "rounded-lg px-4 py-1.5 text-lg"
+          : size === "md"
+            ? "rounded-xl px-6 py-3 text-2xl"
+            : "rounded-2xl px-10 py-6 text-3xl"
       }`}
     />
+  );
+}
+
+// The shared screen's game controls are a backup: the leader's phone runs the
+// game. Says whose phone that is, next to small buttons.
+export function BackupControls({ leader, children }: { leader?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      {leader && (
+        <p className="text-2xl text-stone-400">
+          <span className="font-semibold text-white">{leader}</span>&apos;s phone moves the story forward.
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-3">{children}</div>
+    </div>
   );
 }
 

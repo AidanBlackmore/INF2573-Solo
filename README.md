@@ -15,25 +15,26 @@ Phones and the laptop never talk to each other directly. Every action goes to Su
 
 ## How a game works
 
-The laptop page is the shared screen. There is no separate host: whoever is next to the laptop clicks its buttons.
+The laptop page is the shared screen. **The first player to join leads**: their phone moves the story forward (start, reveal, vote again, next act, replay). The shared screen shows whose phone that is, and keeps small backup buttons for the same actions in case that phone dies or locks.
 
-1. Create a room on the laptop. Players join (2 to 6) and vote for one of the four universes on their phones. The screen shows the votes live, and players can change their vote until the game starts. Click **Start** on the screen to play the most-voted universe. If the top votes are tied, the screen shows the tied universes and you click the one to play.
-2. Each act: the scenario shows on the TV, everyone picks secretly on their phone, and the TV shows who has submitted (not what). Each vote starts with a **20-second discussion**: everyone sees the scenario and the options, but phones can't choose yet, so the group talks it over first. Then voting opens with a **60-second timer**, shown on the TV and on every phone. When everyone has chosen, someone clicks **Reveal now**, or the timer runs out, all choices are revealed together, followed by the outcome. If the timer runs out, the server picks at random for anyone who hasn't chosen, and the reveal marks those choices "picked at random, time ran out". Click **Next act** to continue.
+1. Create a room on the laptop. Players join (2 to 6) and vote for one of the four universes on their phones. The screen shows the votes live, and players can change their vote until the game starts. The leader taps **Start** to play the most-voted universe. If the top votes are tied, the leader picks which of the tied universes to play.
+2. Each act: the scenario shows on the TV, everyone picks secretly on their phone, and the TV shows who has submitted (not what). Each vote starts with a **20-second discussion**: everyone sees the scenario and the options, but phones can't choose yet, so the group talks it over first. Then voting opens with a **60-second timer**, shown on the TV and on every phone. When everyone has chosen, the leader taps **Reveal now**, or the timer runs out, all choices are revealed together, followed by the outcome. If the timer runs out, the server picks at random for anyone who hasn't chosen, and the reveal marks those choices "picked at random, time ran out". The leader taps **Next act** to continue.
 3. Acts 1 and 4 are about picking a person (anyone, including yourself). Acts 2 and 3 have options A, B and C.
-4. Split rules: **Together** means everyone chose the same. **Majority** means one answer got more than half the votes. **Divided** means no answer got more than half. If the most votes are tied, click **Vote again**: everyone re-votes on their phone, choosing only between the tied answers. If the re-vote ties again, click the winner on the screen. Ties are never broken automatically. The split type (and the opener) comes from the first vote; re-votes do not count in the ending recap.
+4. Split rules: **Together** means everyone chose the same. **Majority** means one answer got more than half the votes. **Divided** means no answer got more than half. If the most votes are tied, the leader taps **Vote again**: everyone re-votes on their phone, choosing only between the tied answers. If the re-vote ties again, the leader picks the winner. Ties are never broken automatically. The split type (and the opener) comes from the first vote; re-votes do not count in the ending recap.
 5. After act 4, the ending recap shows counts only (never motives), plus **Play another universe** (back to the vote, same players, votes cleared) and **Replay this one**.
 
 ## Where things live
 
 - **Story content:** [`content/universes.ts`](content/universes.ts). All four universes, every scenario, opener and outcome. Add or edit a universe here without touching game logic. `{winner}` and `{runner_up}` are filled in automatically. A universe with `locked: true` shows greyed out ("Coming soon") in the lobby and can't be voted for; on this branch only Mall Night is unlocked. Remove the flag to bring a universe back.
 - **Scenes (animated images):** each act can set `scene` in `content/universes.ts` to a file in `public/`. The shared screen shows it in a band above the text, as a muted looping video (or a still `.jpg`/`.png`/`.webp`). Mall Night expects `public/media/mall-night/act-1.mp4` to `act-4.mp4`: drop files in with those names, no code changes needed. Until a file exists, the band shows a dark placeholder (with the expected path when running `npm run dev`). Use MP4 (H.264), muted, about 5 seconds that loop cleanly, 720p, ideally 1–3 MB each. Keep the motion subtle, since the text sits right below it. Phones don't show scenes.
+- **Moving the story forward:** [`lib/actions.ts`](lib/actions.ts). Start, reveal, re-vote, tie pick, next act and replay, used by both the leader's phone and the shared screen's backup buttons. The leader is the first player to join (`roomLeader` in `lib/game.ts`, same rule as the database).
 - **Game rules:** [`lib/game.ts`](lib/game.ts). Split rules, ties, outcome text and the recap. `getOpener()` is the placeholder for a future AI-generated opener.
 - **Screens:** `app/host/` (shared screen) and `app/play/[code]/` (phone).
-- **Database:** [`supabase/migrations/`](supabase/migrations). Run the files in order. `0005_choice_timer.sql` adds the voting timer and `0006_discussion_window.sql` adds the discussion before it. To change their lengths, change the `choice_seconds` (10 to 600) and `discussion_seconds` (0 to 300, 0 turns the discussion off) defaults on `rooms`.
+- **Database:** [`supabase/migrations/`](supabase/migrations). Run the files in order. `0005_choice_timer.sql` adds the voting timer, `0006_discussion_window.sql` adds the discussion before it, and `0007_phone_leader.sql` lets the first player run the game from their phone. To change their lengths, change the `choice_seconds` (10 to 600) and `discussion_seconds` (0 to 300, 0 turns the discussion off) defaults on `rooms`.
 
 ## Privacy and server rules
 
-- **Only the server writes.** Devices can only read tables. Every action (create room, join, vote for a universe, start a universe, submit, reveal, re-vote, next act, pick a winner) is a database function that checks the request first. Examples: only the laptop that created the room can run the game, you can only submit while an act is open, a person pick must be someone in the room, and an option must be one of the act's options. A second tap is ignored, so you get one choice per player per act. Rooms are limited to 6 players.
+- **Only the server writes.** Devices can only read tables. Every action (create room, join, vote for a universe, start a universe, submit, reveal, re-vote, next act, pick a winner) is a database function that checks the request first. Examples: only the first player to join and the laptop that created the room can run the game, you can only submit while an act is open, a person pick must be someone in the room, and an option must be one of the act's options. A second tap is ignored, so you get one choice per player per act. Rooms are limited to 6 players.
 - **Choices are private (Row Level Security).** You can read your own choice. Other people's choices for an act only become readable to the room once that act is revealed. The TV sees who has submitted through `players.submitted_round`, not by reading choices.
 
 ## Environment variables
@@ -50,9 +51,9 @@ PostHog records pageviews plus these events:
 
 | Event | Sent from | When | Properties |
 |---|---|---|---|
-| `universe_selected` | Shared screen | A universe starts (not on replay) | `universe_id` |
-| `universe_selected_<universe>` | Shared screen | Same moment, one event name per universe: `universe_selected_mall_night`, `universe_selected_last_train`, `universe_selected_station_zero`, `universe_selected_moonlight_academy` | `universe_id` |
-| `round_1_started`, `round_2_started`… | Shared screen | Each act starts. There is one round per act, so a 4-act universe sends `round_1_started` to `round_4_started`. | `universe_id`, `round`, `total_rounds` |
+| `universe_selected` | Leader's phone (or shared screen) | A universe starts (not on replay) | `universe_id` |
+| `universe_selected_<universe>` | Leader's phone (or shared screen) | Same moment, one event name per universe: `universe_selected_mall_night`, `universe_selected_last_train`, `universe_selected_station_zero`, `universe_selected_moonlight_academy` | `universe_id` |
+| `round_1_started`, `round_2_started`… | Leader's phone (or shared screen) | Each act starts. There is one round per act, so a 4-act universe sends `round_1_started` to `round_4_started`. | `universe_id`, `round`, `total_rounds` |
 | `universe_vote_cast` | Phone | A player votes (or changes their vote) for a universe in the lobby | `universe_id` |
 | `vote_submitted` | Phone | A player submits their choice in an act or a tie-break re-vote | `universe_id`, `round`, `total_rounds`, `stage` (`vote` or `revote`), `act_kind` (`player` or `option`) |
 | `choice_auto_selected` | Shared screen | The timer ran out and the server picked at random for a player. One event per auto-picked player. | `universe_id`, `round`, `total_rounds`, `stage`, `act_kind` |
@@ -103,12 +104,14 @@ First-time setup:
 - [ ] Open `/host` and click **Create game**. A room code and a QR code appear.
 - [ ] Two phones join. They appear on the TV without a refresh, and each phone shows the four universes to vote for.
 - [ ] Vote on both phones. The vote counts and checks update on the TV live. Change one vote and see the count move.
-- [ ] With a tie, the TV shows a start button for each tied universe. Otherwise it shows **Start** with the leading universe's name. Click it.
+- [ ] The first phone to join shows a "You lead the game" panel; the other phone says the game starts when that player taps Start. The TV says whose phone moves the story forward.
+- [ ] With a tie, the leader's phone shows a start button for each tied universe. Otherwise it shows **Start** with the leading universe's name. Tap it.
 - [ ] Act 1: the phones show everyone's names. Submit on one phone, tapping twice quickly. The TV shows a check for that player but not their pick.
 - [ ] Refresh the other phone mid-act. It comes back as the same player, still able to choose.
 - [ ] When everyone has chosen, the TV reveals the choices and the outcome with the right names filled in.
-- [ ] Act 2: the phones show options A, B and C. Make two players choose differently (a 1-1 tie). The TV shows **Vote again**, and **Next act** stays disabled. Click it: the phones show only the tied options. If the re-vote ties again, click the winner on the screen.
-- [ ] Finish act 4 and click **See the ending**. Check the recap counts against what everyone chose.
+- [ ] Act 2: the phones show options A, B and C. Make two players choose differently (a 1-1 tie). The leader's phone shows **Vote again** instead of **Next act**. Tap it: the phones show only the tied options. If the re-vote ties again, the leader's phone shows a button for each tied answer.
+- [ ] Finish act 4 and tap **See the ending** on the leader's phone. Check the recap counts against what everyone chose.
 - [ ] **Replay this one** starts act 1 again. **Play another universe** goes back to the picker with the same players.
+- [ ] Backup: use the small buttons on the TV for one step instead of the leader's phone. The game moves on the same way.
 - [ ] Optional: refresh the laptop mid-game. It returns to the same room and act.
 - [ ] Optional: a 7th phone tries to join and sees "This room is full".
