@@ -117,3 +117,11 @@ First-time setup:
 - [ ] Backup: use the small buttons on the TV for one step instead of the leader's phone. The game moves on the same way.
 - [ ] Optional: refresh the laptop mid-game. It returns to the same room and act.
 - [ ] Optional: a 7th phone tries to join and sees "This room is full".
+
+## Changelog
+
+### 2026-10-18
+
+- **Host controls on the phone.** The first player to join a room now runs the game from their phone: start the universe, reveal now, vote again, pick a tie winner, next act, see the ending, replay or play another universe. The shared screen shows whose phone moves the story forward, and keeps small backup buttons for the same actions in case that phone dies or locks. Needs `supabase/migrations/0007_phone_leader.sql`.
+- **Random Murderer assignment.** Each time a universe starts or is replayed, the database picks one random player as the Murderer, so the role can change between playthroughs. Needs `supabase/migrations/0008_secret_role.sql`.
+- **Murderer role kept hidden.** Only the Murderer's phone can read the role. The database blocks everyone else, including the shared screen, so it can't be found by inspecting another device. Every phone shows the same "Secret role" card during the game, and the role only appears while the card is held down: a knife icon and "You are the Murderer", or "You are innocent". The role has no goal and is not revealed at the end yet.
